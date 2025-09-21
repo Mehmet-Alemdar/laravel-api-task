@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nginx \
     supervisor \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -30,6 +32,12 @@ COPY docker/nginx/default.conf /etc/nginx/sites-available/default
 # Copy supervisor configuration
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy composer files first for better caching
+COPY composer.json composer.lock /var/www/html/
+
+# Install PHP dependencies first
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
 # Copy application files
 COPY . /var/www/html
 
@@ -38,8 +46,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Run composer scripts and dump autoload again
+RUN composer dump-autoload --optimize
 
 # Expose port 80
 EXPOSE 80

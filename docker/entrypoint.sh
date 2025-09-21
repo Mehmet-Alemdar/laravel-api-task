@@ -19,6 +19,12 @@ done
 
 echo ">> Redis hazır!"
 
+# Install dependencies if vendor directory doesn't exist
+if [ ! -d "vendor" ]; then
+    echo ">> Composer dependencies yükleniyor..."
+    composer install --no-dev --optimize-autoloader
+fi
+
 # Generate application key if not exists
 if [ ! -f .env ]; then
     echo ">> .env dosyası kopyalanıyor..."
