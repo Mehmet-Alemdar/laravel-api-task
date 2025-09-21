@@ -13,6 +13,6 @@ Route::get('/articles/{id}', [ArticleController::class, 'show']);
 
 Route::get('/articles/{id}/comments', [CommentController::class, 'index']);
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:comment-post'])->group(function () {
     Route::post('/articles/{id}/comments', [CommentController::class, 'store']);
 });
