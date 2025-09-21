@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('article_id');
             $table->uuid('user_id');
             $table->text('content');
-            $table->enum('status', ['pending', 'published', 'rejected'])->default('pending');
+            $table->string('status')->default(\App\Enums\CommentStatus::Pending->value);
             $table->timestamps();
 
             $table->foreign('article_id')->references('id')->on('articles')->onDelete('cascade');
