@@ -6,6 +6,7 @@ use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
+use App\Helpers\ApiResponse;
 
 class AuthController extends Controller
 {
@@ -23,8 +24,6 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-        ]);
+        return ApiResponse::success(['token' => $token], 'Login successful');
     }
 }
