@@ -11,28 +11,29 @@ use App\Http\Requests\GlobalFilterRequest;
 use App\Http\Requests\StoreCommentRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\CommentStatus;
+use Illuminate\Support\Facades\Cache;
+use App\Jobs\ModerateCommentJob;
 
 class CommentController extends Controller
 {
     public function index(GlobalFilterRequest $request, string $articleId): JsonResponse
     {
         $filters = $request->filters(); 
+        $page    = $filters['page'];
+        $perPage = $filters['per_page'];
 
-        $query = Comment::where('article_id', $articleId);
+        $key = "comments:article:{$articleId}:page:{$page}";
+        $ttl = config('comments.cache_ttl', 60);
 
-        if ($filters['search']) {
-            $query->where('content', 'ILIKE', "%{$filters['search']}%");
-        }
-
-        if ($filters['from']) {
-            $query->whereDate('created_at', '>=', $filters['from']);
-        }
-
-        if ($filters['to']) {
-            $query->whereDate('created_at', '<=', $filters['to']);
-        }
-
-        $comments = $query->orderByDesc('created_at')->paginate($filters['per_page']);
+        $comments = Cache::tags(["article:{$articleId}"])->remember(
+            $key,
+            $ttl,
+            function () use ($articleId, $perPage) {
+                return Comment::where('article_id', $articleId)
+                    ->orderByDesc('created_at')
+                    ->paginate($perPage);
+            }
+        );
 
         return ApiResponse::success([
             'items' => CommentResource::collection($comments),
@@ -48,6 +49,8 @@ class CommentController extends Controller
             'content'    => $request->input('content'),
             'status'     => CommentStatus::Pending->value,
         ]);
+
+        ModerateCommentJob::dispatch($comment->id);
 
         return ApiResponse::success(
             ['comment_id' => $comment->id],
