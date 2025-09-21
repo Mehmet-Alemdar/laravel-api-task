@@ -44,20 +44,26 @@ Client → API Gateway → Laravel App → PostgreSQL Database
    cd laravel-api-task
    ```
 
-2. **Start Services**
+2. **Setup Environment**
+   ```bash
+   cp env.docker.example .env
+   # Docker-compose will override most settings, but .env is still required
+   ```
+
+3. **Start Services**
    ```bash
    make build && make up
    # Or manually: docker-compose build && docker-compose up -d
    ```
 
-3. **Initialize Application**
+4. **Initialize Application**
    ```bash
    make key      # Generate app key
    make migrate  # Run migrations
    make seed     # Seed sample data
    ```
 
-4. **Verify Installation**
+5. **Verify Installation**
    ```bash
    curl http://localhost:8000/api/articles
    ```
@@ -92,19 +98,22 @@ Client → API Gateway → Laravel App → PostgreSQL Database
 
 ### Docker Environment
 ```env
-# Database
+# Copy from env.docker.example to .env
+# Note: docker-compose.yml overrides most of these settings
+
+# Database (overridden by docker-compose)
 DB_CONNECTION=pgsql
 DB_HOST=db
 DB_DATABASE=laravel_api
 DB_USERNAME=laravel_user
 DB_PASSWORD=laravel_password
 
-# Cache & Queue
+# Cache & Queue (overridden by docker-compose)
 CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 REDIS_HOST=redis
 
-# Comment System
+# Comment System (used by application)
 BANNED_KEYWORDS="spam,badword,offensive,inappropriate"
 COMMENTS_CACHE_TTL=120
 ```
