@@ -7,36 +7,34 @@ use App\Http\Resources\ArticleResource;
 use Illuminate\Http\JsonResponse;
 use App\Helpers\ApiResponse;
 use App\Helpers\PaginationHelper;
+use App\Http\Requests\GlobalFilterRequest;
 
 
 class ArticleController extends Controller
 {
 
-    public function index(): JsonResponse
+    public function index(GlobalFilterRequest $request): JsonResponse
     {
-        $perPage = request()->get('per_page', 10);
-        $search  = request()->get('search');
-        $from    = request()->get('from');
-        $to      = request()->get('to');  
+        $filters = $request->filters(); 
 
         $query = Article::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'ILIKE', "%{$search}%")
-                ->orWhere('body', 'ILIKE', "%{$search}%");
+        if ($filters['search']) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('title', 'ILIKE', "%{$filters['search']}%")
+                ->orWhere('body', 'ILIKE', "%{$filters['search']}%");
             });
         }
 
-        if ($from) {
-            $query->whereDate('created_at', '>=', $from);
+        if ($filters['from']) {
+            $query->whereDate('created_at', '>=', $filters['from']);
         }
 
-        if ($to) {
-            $query->whereDate('created_at', '<=', $to);
+        if ($filters['to']) {
+            $query->whereDate('created_at', '<=', $filters['to']);
         }
 
-        $articles = $query->orderByDesc('created_at')->paginate($perPage);
+        $articles = $query->paginate($filters['per_page']);
 
         return ApiResponse::success([
             'items' => ArticleResource::collection($articles),
