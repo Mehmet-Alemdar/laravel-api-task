@@ -21,6 +21,12 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
         ]);
 
+        User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
         Article::factory(2)->create()->each(function ($article) use ($users) {
             Comment::factory(3)->create([
                 'article_id' => $article->id,
