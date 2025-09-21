@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-api-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/sites-available/default
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel-api-network
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=db
+      - DB_DATABASE=laravel_api
+      - DB_USERNAME=laravel_user
+      - DB_PASSWORD=laravel_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-api-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: php artisan queue:work --verbose --tries=3 --timeout=90
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel-api-network
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=db
+      - DB_DATABASE=laravel_api
+      - DB_USERNAME=laravel_user
+      - DB_PASSWORD=laravel_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+
+  db:
+    image: postgres:15
+    container_name: laravel-api-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: laravel_api
+      POSTGRES_USER: laravel_user
+      POSTGRES_PASSWORD: laravel_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - laravel-api-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: laravel-api-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - laravel-api-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  laravel-api-network:
+    driver: bridge
