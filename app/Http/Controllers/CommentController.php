@@ -8,6 +8,9 @@ use App\Helpers\ApiResponse;
 use App\Helpers\PaginationHelper;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\GlobalFilterRequest;
+use App\Http\Requests\StoreCommentRequest;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\CommentStatus;
 
 class CommentController extends Controller
 {
@@ -35,5 +38,21 @@ class CommentController extends Controller
             'items' => CommentResource::collection($comments),
             'meta'  => PaginationHelper::format($comments),
         ]);
+    }
+
+    public function store(StoreCommentRequest $request, string $articleId)
+    {
+        $comment = Comment::create([
+            'article_id' => $articleId,
+            'user_id'    => Auth::id(),
+            'content'    => $request->input('content'),
+            'status'     => CommentStatus::Pending->value,
+        ]);
+
+        return ApiResponse::success(
+            ['comment_id' => $comment->id],
+            'Comment queued for moderation',
+            202
+        );
     }
 }
