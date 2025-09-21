@@ -2,9 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return response()->json([
-        'success' => true,
-        'message' => 'API works!'
-    ]);
-});
+use App\Http\Controllers\AuthController;
+
+Route::post('/auth/login', [AuthController::class, 'login']);
